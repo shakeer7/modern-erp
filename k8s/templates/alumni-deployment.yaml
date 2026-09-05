@@ -24,4 +24,4 @@ spec:
         - containerPort: 8000
         env:
         - name: DATABASE_URL
-          value: "mysql+pymysql://root:collegepassword@mysql-service:3306/unipiper"
+          value: "mysql+pymysql://root:password@mysql-service:3306/unipiper"

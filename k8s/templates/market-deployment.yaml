@@ -24,6 +24,6 @@ spec:
         - containerPort: 8000
         env:
         - name: DATABASE_URL
-          value: "mysql+pymysql://root:collegepassword@mysql-service:3306/unipiper"
+          value: "mysql+pymysql://root:password@mysql-service:3306/unipiper"
         - name: AWS_S3_BUCKET_NAME
           value: "college-app-market-images-610714125174"
