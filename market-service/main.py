@@ -14,7 +14,7 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 # S3 Configuration
-S3_BUCKET = os.environ.get("AWS_S3_BUCKET_NAME", "college-app-market-images")
+S3_BUCKET = os.environ.get("AWS_S3_BUCKET_NAME", "college-app-market-images-610714125174")
 AWS_REGION = os.environ.get("AWS_REGION", "ap-south-1")
 
 s3_client = boto3.client('s3', region_name=AWS_REGION)

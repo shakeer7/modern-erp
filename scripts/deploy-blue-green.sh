@@ -43,8 +43,15 @@ kubectl patch service ${APP_NAME}-service -p "{\"spec\":{\"selector\":{\"color\"
 
 echo "Successfully switched traffic to $NEW_COLOR environment."
 
-# Scale down the old deployment to save resources (optional, but good for saving cost)
+# Scale down the old deployment to save resources if it exists
 if [ "$OLD_COLOR" != "none" ]; then
-    echo "Scaling down old $OLD_COLOR deployment..."
-    kubectl scale deployment ${APP_NAME}-deployment-${OLD_COLOR} --replicas=0
+    if kubectl get deployment ${APP_NAME}-deployment-${OLD_COLOR} >/dev/null 2>&1; then
+        echo "Scaling down old $OLD_COLOR deployment..."
+        kubectl scale deployment ${APP_NAME}-deployment-${OLD_COLOR} --replicas=0
+    else
+        echo "Old deployment ${APP_NAME}-deployment-${OLD_COLOR} does not exist yet, skipping scale down."
+    fi
 fi
+
+# Cleanup temporary deployment manifest
+rm -f ./.deploy-${APP_NAME}.yaml

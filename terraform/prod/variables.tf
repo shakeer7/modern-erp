@@ -90,6 +90,24 @@ variable "ecr_auth_repository_name" {
   type        = string
   default     = "college-auth"
 }
+variable "ecr_club_repository_name" {
+  description = "ECR repository holding club service images."
+  type        = string
+  default     = "college-club"
+}
+
+variable "ecr_alumni_repository_name" {
+  description = "ECR repository holding alumni service images."
+  type        = string
+  default     = "college-alumni"
+}
+
+variable "ecr_course_repository_name" {
+  description = "ECR repository holding course service images."
+  type        = string
+  default     = "college-course"
+}
+
 variable "ecr_market_repository_name" {
   description = "ECR repository holding market service images."
   type        = string

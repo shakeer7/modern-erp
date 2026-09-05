@@ -46,6 +46,21 @@ module "ecr_auth" {
   repository_name = var.ecr_auth_repository_name
 }
 
+module "ecr_club" {
+  source          = "../modules/ecr"
+  repository_name = var.ecr_club_repository_name
+}
+
+module "ecr_alumni" {
+  source          = "../modules/ecr"
+  repository_name = var.ecr_alumni_repository_name
+}
+
+module "ecr_course" {
+  source          = "../modules/ecr"
+  repository_name = var.ecr_course_repository_name
+}
+
 module "ecr_market" {
   source          = "../modules/ecr"
   repository_name = var.ecr_market_repository_name
