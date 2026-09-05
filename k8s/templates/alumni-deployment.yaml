@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: alumni-service-deployment-COLOR_PLACEHOLDER
+  name: alumni-deployment-COLOR_PLACEHOLDER
   labels:
     app: alumni-service
     color: COLOR_PLACEHOLDER

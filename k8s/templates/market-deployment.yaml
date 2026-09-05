@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: market-service-deployment-COLOR_PLACEHOLDER
+  name: market-deployment-COLOR_PLACEHOLDER
   labels:
     app: market-service
     color: COLOR_PLACEHOLDER

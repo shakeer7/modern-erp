@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: course-service-deployment-COLOR_PLACEHOLDER
+  name: course-deployment-COLOR_PLACEHOLDER
   labels:
     app: course-service
     color: COLOR_PLACEHOLDER

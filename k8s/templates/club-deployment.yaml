@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: club-service-deployment-COLOR_PLACEHOLDER
+  name: club-deployment-COLOR_PLACEHOLDER
   labels:
     app: club-service
     color: COLOR_PLACEHOLDER
