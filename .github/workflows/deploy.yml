@@ -1,0 +1,145 @@
+name: Deploy Microservices to Amazon EKS
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  AWS_REGION: "ap-south-1"
+  ECR_FRONTEND_REPO: "college-frontend"
+  ECR_AUTH_REPO: "college-auth"
+  ECR_CLUB_REPO: "college-club"
+  ECR_ALUMNI_REPO: "college-alumni"
+  ECR_COURSE_REPO: "college-course"
+  ECR_MARKET_REPO: "college-market"
+  EKS_CLUSTER: "college-app-cluster"
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Frontend
+        id: build-frontend
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build \
+            -t $ECR_REGISTRY/$ECR_FRONTEND_REPO:$IMAGE_TAG \
+            ./frontend
+
+          docker push \
+            $ECR_REGISTRY/$ECR_FRONTEND_REPO:$IMAGE_TAG
+
+          echo "image=$ECR_REGISTRY/$ECR_FRONTEND_REPO:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Build and push Auth Service
+        id: build-auth
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_AUTH_REPO:$IMAGE_TAG ./auth-service
+          docker push $ECR_REGISTRY/$ECR_AUTH_REPO:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_AUTH_REPO:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Build and push Club Service
+        id: build-club
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_CLUB_REPO:$IMAGE_TAG ./club-service
+          docker push $ECR_REGISTRY/$ECR_CLUB_REPO:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_CLUB_REPO:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Build and push Alumni Service
+        id: build-alumni
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_ALUMNI_REPO:$IMAGE_TAG ./alumni-service
+          docker push $ECR_REGISTRY/$ECR_ALUMNI_REPO:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_ALUMNI_REPO:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Build and push Course Service
+        id: build-course
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_COURSE_REPO:$IMAGE_TAG ./course-service
+          docker push $ECR_REGISTRY/$ECR_COURSE_REPO:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_COURSE_REPO:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Build and push Market Service
+        id: build-market
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_MARKET_REPO:$IMAGE_TAG ./market-service
+          docker push $ECR_REGISTRY/$ECR_MARKET_REPO:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_MARKET_REPO:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ env.AWS_REGION }} \
+            --name ${{ env.EKS_CLUSTER }}
+
+      - name: Deploy to EKS using Blue-Green
+        env:
+          FRONTEND_IMAGE: ${{ steps.build-frontend.outputs.image }}
+          AUTH_IMAGE: ${{ steps.build-auth.outputs.image }}
+          CLUB_IMAGE: ${{ steps.build-club.outputs.image }}
+          ALUMNI_IMAGE: ${{ steps.build-alumni.outputs.image }}
+          COURSE_IMAGE: ${{ steps.build-course.outputs.image }}
+          MARKET_IMAGE: ${{ steps.build-market.outputs.image }}
+        run: |
+          # Apply static resources
+          kubectl apply -f k8s/mysql.yaml
+          kubectl apply -f k8s/ingress.yaml
+          
+          # Initialize services if they don't exist
+          kubectl get svc frontend-service || kubectl apply -f k8s/frontend-service.yaml
+          kubectl get svc auth-service || kubectl apply -f k8s/auth-svc.yaml
+          kubectl get svc club-service || kubectl apply -f k8s/club-svc.yaml
+          kubectl get svc alumni-service || kubectl apply -f k8s/alumni-svc.yaml
+          kubectl get svc course-service || kubectl apply -f k8s/course-svc.yaml
+          kubectl get svc market-service || kubectl apply -f k8s/market-svc.yaml
+          
+          chmod +x scripts/deploy-blue-green.sh
+          
+          # Run blue-green deployment for each microservice
+          ./scripts/deploy-blue-green.sh frontend $FRONTEND_IMAGE k8s/templates/frontend-deployment.yaml
+          ./scripts/deploy-blue-green.sh auth $AUTH_IMAGE k8s/templates/auth-deployment.yaml
+          ./scripts/deploy-blue-green.sh club $CLUB_IMAGE k8s/templates/club-deployment.yaml
+          ./scripts/deploy-blue-green.sh alumni $ALUMNI_IMAGE k8s/templates/alumni-deployment.yaml
+          ./scripts/deploy-blue-green.sh course $COURSE_IMAGE k8s/templates/course-deployment.yaml
+          ./scripts/deploy-blue-green.sh market $MARKET_IMAGE k8s/templates/market-deployment.yaml
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods
+          kubectl get services
+          kubectl get ingress

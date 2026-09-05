@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-deployment-COLOR_PLACEHOLDER
+  labels:
+    app: auth-service
+    color: COLOR_PLACEHOLDER
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth-service
+      color: COLOR_PLACEHOLDER
+  template:
+    metadata:
+      labels:
+        app: auth-service
+        color: COLOR_PLACEHOLDER
+    spec:
+      containers:
+      - name: auth-app
+        image: IMAGE_PLACEHOLDER
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          value: "mysql+pymysql://root:password@mysql-service:3306/unipiper"
